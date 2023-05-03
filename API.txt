@@ -1,1 +1,2 @@
-86c52ad98c55e9f6381a9c7965161105
+Financialmodellingpreop= '86c52ad98c55e9f6381a9c7965161105'
+alpha_vantage = 'WYIFLCPADSDLDB4V'

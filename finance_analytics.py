@@ -1,7 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import requests
-from collections import defaultdict
 import pandas as pd
 st.set_page_config(layout="wide", initial_sidebar_state='auto')
 
@@ -12,6 +11,7 @@ def A_operations_processing(ProcessMapping,operation,title):
     new_url = url+function+symbol
     r = requests.get(new_url)
     data = r.json()
+    
     
     if operation == 'Company Overview':
         st.dataframe(pd.json_normalize(data).transpose())
@@ -24,7 +24,7 @@ def A_operations_processing(ProcessMapping,operation,title):
             options=list(range(0, len(data["annualEarnings"]))),
             value=(0,len(data["annualEarnings"])))
                 
-        # selectedAnnualYear = st.sidebar.selectbox("Year Selector",(list(range(0, len(data["annualEarnings"])))),0)
+        selectedAnnualYear = st.sidebar.selectbox("Year Selector",(list(range(0, len(data["annualEarnings"])))),0)
         selectedQuaterlyReport = st.sidebar.selectbox("Quater Selector",(list(range(0, len(data["quarterlyEarnings"])))),0)
         col1, col2 = st.columns([4,4])
         col1.header("Annual Earnings")
@@ -59,7 +59,7 @@ def B_operations_processing(ProcessMapping,operation,title):
 def stock_selector(ProcessMapping):
     st.sidebar.title('Financial Analytics')
     st.markdown('API Limit **500 Calls/Day** OR **5 Calls/Min**')
-    st.markdown('**EVERY ACTION NEW CALL**')
+    st.markdown('**EVERY ACTION IS A NEW CALL**')
     
     title = st.text_input('Tickr Selector')
     st.write('The current ticker selected:', title)

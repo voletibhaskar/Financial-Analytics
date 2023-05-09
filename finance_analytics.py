@@ -1,127 +1,93 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import requests
+from collections import defaultdict
 import pandas as pd
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", initial_sidebar_state='auto')
 
-
-def stock_api_generator(ALPHA_VANTAGE_KEY,title):
+def A_operations_processing(ProcessMapping,operation,title):
     url = 'https://www.alphavantage.co/query?'
-    function = 'function='+'OVERVIEW'
-    symbol = '&symbol='+title+'&apikey='+ALPHA_VANTAGE_KEY
-    title_list = title.split(',')
-    for title_iterator in title_list:
-        new_url = url+function+symbol
-        r = requests.get(new_url)
-        data = r.json()
-        json_data_processing(data)
-
-def json_data_processing(data):
-    
-    dataframe = pd.DataFrame({
-    'Ticker': data['Symbol'],
-    'Name': data['Name'],
-    'Sector': data['Sector'],
-    'Market Cap': data['MarketCapitalization'],
-    'PE Ratio': data['PERatio'],
-    'PEG Ratio': data['PEGRatio'],
-    'Book Ratio': data['BookValue'],
-    'Dividends Per Share': data['DividendPerShare'],
-    'Earnings Per Share': data['EPS'],
-    'Revenue Per Share TTM': data['RevenuePerShareTTM'],
-    '52WeekHigh': data['52WeekHigh'],
-    '52WeekLow': data['52WeekLow'],
-    '50DayMovingAverage': data['50DayMovingAverage'],
-    '200DayMovingAverage': data['200DayMovingAverage'],
-    'SharesOutstanding': data['SharesOutstanding'],
-},index=[0])
-    st.write(dataframe)
-
-
-def company_overview_req(ALPHA_VANTAGE_KEY,title):
-    url = 'https://www.alphavantage.co/query?'
-    function = 'function='+'OVERVIEW'
-    symbol = '&symbol='+title+'&apikey='+ALPHA_VANTAGE_KEY
-    new_url = url+function+symbol
-    r = requests.get(new_url)
-    data = r.json()
-    json_data_processing(data)
-    
-def income_statement_req(ALPHA_VANTAGE_KEY,title):
-    url = 'https://www.alphavantage.co/query?'
-    function = 'function='+'INCOME_STATEMENT'
-    symbol = '&symbol='+title+'&apikey='+ALPHA_VANTAGE_KEY
-    new_url = url+function+symbol
-    r = requests.get(new_url)
-    data = r.json()
-    print(data)
-    
-def balance_sheet_req(ALPHA_VANTAGE_KEY,title):
-    url = 'https://www.alphavantage.co/query?'
-    function = 'function='+'BALANCE_SHEET'
-    symbol = '&symbol='+title+'&apikey='+ALPHA_VANTAGE_KEY
-    new_url = url+function+symbol
-    r = requests.get(new_url)
-    data = r.json()
-    print(data)
-    
-def cash_flow_req(ALPHA_VANTAGE_KEY,title):
-    url = 'https://www.alphavantage.co/query?'
-    function = 'function='+'CASH_FLOW'
-    symbol = '&symbol='+title+'&apikey='+ALPHA_VANTAGE_KEY
+    function = 'function='+ProcessMapping['process_type_A'][operation]
+    symbol = '&symbol='+title+'&apikey='+ProcessMapping['ALPHA_VANTAGE_KEY']
     new_url = url+function+symbol
     r = requests.get(new_url)
     data = r.json()
     
-    print(data)
+    if operation == 'Company Overview':
+        st.dataframe(pd.json_normalize(data).transpose())
     
-def earnings_req(ALPHA_VANTAGE_KEY,title):
-    url = 'https://www.alphavantage.co/query?'
-    function = 'function='+'EARNINGS'
-    symbol = '&symbol='+title+'&apikey='+ALPHA_VANTAGE_KEY
-    new_url = url+function+symbol
-    r = requests.get(new_url)
-    data = r.json()
-    print(data)
-    
-def news_sentiments_req(ALPHA_VANTAGE_KEY,title):
-    url = 'https://www.alphavantage.co/query?'
-    function = 'function='+'NEWS_SENTIMENT'
-    symbol = '&tickers='+title+'&apikey='+ALPHA_VANTAGE_KEY
-    new_url = url+function+symbol
-    r = requests.get(new_url)
-    data = r.json()
-    print(data)
-    
+    elif operation == 'Earnings':
+        print('My Earnings: ',data)
+        
+        start_year, end_year = st.sidebar.select_slider(
+            'Select the range of your years',
+            options=list(range(0, len(data["annualEarnings"]))),
+            value=(0,len(data["annualEarnings"])))
+                
+        # selectedAnnualYear = st.sidebar.selectbox("Year Selector",(list(range(0, len(data["annualEarnings"])))),0)
+        selectedQuaterlyReport = st.sidebar.selectbox("Quater Selector",(list(range(0, len(data["quarterlyEarnings"])))),0)
+        col1, col2 = st.columns([4,4])
+        col1.header("Annual Earnings")
+        col1.dataframe(pd.json_normalize(data['annualEarnings'][start_year:end_year]).transpose())
+        col2.header("Quaterly Earnings")
+        col2.dataframe(pd.json_normalize(data['quarterlyEarnings'][selectedQuaterlyReport]).transpose())
+  
+    else:
+        print('My data: ',data)
+        selectedAnnualYear = st.sidebar.selectbox("Annual Reports",(list(range(0, len(data["annualReports"])))),0)
+        selectedQuaterlyReport = st.sidebar.selectbox("Quaterly Reports",(list(range(0, len(data["quarterlyReports"])))),0)
+        col1, col2 = st.columns([4,4])
+        col1.header("Annual Reports")
+        col1.dataframe(pd.json_normalize(data['annualReports'][selectedAnnualYear]).transpose())
+        col2.header("Quaterly Reports")
+        col2.dataframe(pd.json_normalize(data['quarterlyReports'][selectedQuaterlyReport]).transpose())
 
-def stock_selector(ALPHA_VANTAGE_KEY,OPTIONS):
+        # st.write(data)
+        
+    # json_data_processing(data)
+    
+def B_operations_processing(ProcessMapping,operation,title):
+    url = 'https://www.alphavantage.co/query?'
+    function = 'function='+ProcessMapping['process_type_B'][operation]
+    symbol = '&tickers='+title+'&apikey='+ProcessMapping['ALPHA_VANTAGE_KEY']
+    new_url = url+function+symbol
+    r = requests.get(new_url)
+    data = r.json()
+    st.dataframe(pd.json_normalize(data))
+
+# def stock_selector(ALPHA_VANTAGE_KEY,OPTIONS):
+def stock_selector(ProcessMapping):
     st.sidebar.title('Financial Analytics')
-    title = st.text_input('Tickr Selector', 'TD')
+    st.markdown('API Limit **500 Calls/Day** OR **5 Calls/Min**')
+    st.markdown('**EVERY ACTION NEW CALL**')
+    
+    title = st.text_input('Tickr Selector')
     st.write('The current ticker selected:', title)
     
-    option = st.sidebar.selectbox("",(OPTIONS),0)
-    
-    if option == 'Company Overview':
-        company_overview_req(ALPHA_VANTAGE_KEY,title)
-        
-    if option == 'Income Statement':
-        income_statement_req(ALPHA_VANTAGE_KEY,title)
-
-    if option == 'Balance Sheet':
-        balance_sheet_req(ALPHA_VANTAGE_KEY,title)
-
-    if option == 'Cash Flow':
-        balance_sheet_req(ALPHA_VANTAGE_KEY,title)
-
-    if option == 'Earnings':
-        balance_sheet_req(ALPHA_VANTAGE_KEY,title)
-
+    optionsList = list(ProcessMapping["process_type_A"].keys()) + list(ProcessMapping["process_type_B"].keys())
+    option = st.sidebar.selectbox("",(optionsList),0)
     if option == 'News & Sentiments':
-        balance_sheet_req(ALPHA_VANTAGE_KEY,title)
+        B_operations_processing(ProcessMapping,option,title)
+        # balance_sheet_req(ALPHA_VANTAGE_KEY,title)
+    else:
+        A_operations_processing(ProcessMapping,option,title)
         
     
 
 if __name__ == "__main__":
-    ALPHA_VANTAGE_KEY = 'WYIFLCPADSDLDB4V'
-    OPTIONS = ['Company Overview','Income Statement','Balance Sheet','Cash Flow','Earnings','News & Sentiments']
-    stock_selector(ALPHA_VANTAGE_KEY,OPTIONS)
+    ProcessMapping = {
+        'ALPHA_VANTAGE_KEY' : 'WYIFLCPADSDLDB4V',
+        'process_type_A' : {
+            'Company Overview': 'OVERVIEW',
+            'Income Statement': 'INCOME_STATEMENT',
+            'Balance Sheet': 'BALANCE_SHEET',
+            'Cash Flow' : 'CASH_FLOW',
+            'Earnings' : 'EARNINGS',
+                            },
+        'process_type_B' : {
+            'News & Sentiments' : 'NEWS_SENTIMENT'
+        }
+        
+    }
+    # stock_selector(ALPHA_VANTAGE_KEY,OPTIONS)
+    stock_selector(ProcessMapping)

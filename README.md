@@ -13,4 +13,4 @@ Min Limit - 5 Calls
 5. Earnings
 6. News & Sentiments
 
-![](https://github.com/Financial-Analytics/Images/financial_analytics_working.gif)
+![](/Images/financial_analytics_working.gif)
